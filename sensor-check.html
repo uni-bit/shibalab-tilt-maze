@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>センサー動作確認</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 18px 16px 40px;
+    background: #16181d; color: #e8eaf0;
+    font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", sans-serif;
+    text-align: center;
+  }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  .lead { font-size: 13px; opacity: .65; margin: 0 0 20px; line-height: 1.6; }
+
+  button {
+    font-size: 17px; font-weight: 600;
+    padding: 15px 34px; border: none; border-radius: 10px;
+    background: #4a7ddb; color: #fff; cursor: pointer;
+  }
+  button:disabled { background: #3a3f4a; color: #888; }
+
+  #verdict {
+    margin: 20px auto 0; max-width: 420px;
+    padding: 16px; border-radius: 10px;
+    font-size: 16px; font-weight: 700; line-height: 1.6;
+    background: #23262e; border: 2px solid #3a3f4a;
+  }
+  #verdict.ok { background: #16301f; border-color: #2f7d4f; color: #9fe8bb; }
+  #verdict.ng { background: #341818; border-color: #9c3b3b; color: #ffb9b9; }
+  #verdictSub { font-size: 13px; font-weight: 400; opacity: .85; margin-top: 8px; white-space: pre-wrap; }
+
+  #pad {
+    width: 240px; height: 240px; margin: 22px auto 0;
+    border: 2px solid #3a3f4a; border-radius: 12px;
+    background: #1c1f26; position: relative; overflow: hidden;
+  }
+  #dot {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #e8eaf0; position: absolute;
+    left: 103px; top: 103px;
+    transition: left .05s linear, top .05s linear;
+  }
+  #pad .cross { position: absolute; background: #2b2f38; }
+  #pad .cross.h { left: 0; right: 0; top: 50%; height: 1px; }
+  #pad .cross.v { top: 0; bottom: 0; left: 50%; width: 1px; }
+
+  table { margin: 22px auto 0; border-collapse: collapse; font-size: 14px; }
+  td { padding: 5px 12px; border-bottom: 1px solid #2b2f38; }
+  td.k { text-align: right; opacity: .6; }
+  td.v { text-align: left; font-family: ui-monospace, monospace; font-weight: 600; }
+
+  #info {
+    margin: 24px auto 0; max-width: 460px; padding: 12px 14px;
+    background: #1c1f26; border: 1px solid #2b2f38; border-radius: 8px;
+    font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.7;
+    text-align: left; word-break: break-all; opacity: .75;
+  }
+  .shot { font-size: 13px; opacity: .7; margin-top: 18px; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<h1>センサー動作確認</h1>
+<p class="lead">スマホで開いて、下のボタンを押してください。<br>合宿の前に、自分の端末で動くか確かめます。</p>
+
+<button id="btn">センサーを確認する</button>
+
+<div id="verdict">
+  未確認
+  <div id="verdictSub">ボタンを押してください</div>
+</div>
+
+<div id="pad">
+  <div class="cross h"></div>
+  <div class="cross v"></div>
+  <div id="dot"></div>
+</div>
+
+<table>
+  <tr><td class="k">左右 (gamma)</td><td class="v" id="vg">—</td></tr>
+  <tr><td class="k">前後 (beta)</td><td class="v" id="vb">—</td></tr>
+  <tr><td class="k">受信回数</td><td class="v" id="vc">0</td></tr>
+  <tr><td class="k">イベント種別</td><td class="v" id="vt">—</td></tr>
+</table>
+
+<p class="shot">結果が出たら、この画面のスクリーンショットを<br>担当者に送ってください。</p>
+
+<div id="info"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var btn      = document.getElementById("btn");
+  var verdict  = document.getElementById("verdict");
+  var sub      = document.getElementById("verdictSub");
+  var dot      = document.getElementById("dot");
+  var vg = document.getElementById("vg"), vb = document.getElementById("vb");
+  var vc = document.getElementById("vc"), vt = document.getElementById("vt");
+
+  var count = 0, evType = "—", nullSeen = false, baseBeta = null;
+
+  // ---- 端末情報（スクショで送ってもらう用） ----
+  var DOE = window.DeviceOrientationEvent;
+  document.getElementById("info").textContent =
+    "URL       : " + location.protocol + "//" + location.host + "\n" +
+    "secure    : " + (window.isSecureContext ? "yes" : "NO") + "\n" +
+    "DOE       : " + (DOE ? "yes" : "NO") + "\n" +
+    "reqPerm   : " + (DOE && typeof DOE.requestPermission === "function" ? "yes (iOS)" : "no (Android等)") + "\n" +
+    "UA        : " + navigator.userAgent;
+
+  function say(cls, main, detail) {
+    verdict.className = cls;
+    verdict.firstChild.nodeValue = main;
+    sub.textContent = detail || "";
+  }
+
+  function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+
+  function onEvent(e) {
+    evType = e.type;
+    vt.textContent = evType;
+
+    if (e.beta === null || e.gamma === null) { nullSeen = true; return; }
+
+    count++;
+    vc.textContent = count;
+    vg.textContent = e.gamma.toFixed(1) + "°";
+    vb.textContent = e.beta.toFixed(1) + "°";
+
+    if (baseBeta === null) baseBeta = e.beta;
+    var tx = clamp(e.gamma / 30, -1, 1);
+    var ty = clamp((e.beta - baseBeta) / 30, -1, 1);
+    dot.style.left = (103 + tx * 100) + "px";
+    dot.style.top  = (103 + ty * 100) + "px";
+
+    if (count === 1) {
+      say("ok", "✅ 正常に動作しています",
+          "端末を傾けると、白い丸が動きます。\n動くことを確認してください。");
+    }
+  }
+
+  function check() {
+    setTimeout(function () {
+      if (count > 0) return;
+      if (nullSeen) {
+        say("ng", "❌ 値が取得できません",
+            "センサーは反応していますが、数値が届きません。\n" +
+            "端末の設定でモーションセンサーが\n制限されている可能性があります。");
+      } else {
+        say("ng", "❌ 値が届きません",
+            (window.isSecureContext ? "" : "このページは https:// で開かれていません。\nこれが原因の可能性が高いです。\n\n") +
+            "Android の場合、Chrome のサイト設定で\nモーションセンサーがブロックされていないか\n確認してください。");
+      }
+    }, 3000);
+  }
+
+  btn.addEventListener("click", function () {
+    btn.disabled = true;
+    btn.textContent = "確認中…";
+    say("", "確認中…", "端末をゆっくり傾けてください");
+
+    if (!DOE) {
+      say("ng", "❌ センサーがありません",
+          "この端末またはブラウザは傾きセンサーに\n対応していません。\n" +
+          "PCで開いた場合は、これが正常です。");
+      return;
+    }
+
+    if (typeof DOE.requestPermission === "function") {
+      // iOS 13以降
+      DOE.requestPermission().then(function (res) {
+        if (res === "granted") {
+          window.addEventListener("deviceorientation", onEvent);
+          window.addEventListener("deviceorientationabsolute", onEvent);
+          check();
+        } else {
+          say("ng", "❌ 許可されませんでした",
+              "「許可しない」を選ぶと再表示されません。\n" +
+              "Safariの設定 → このサイトのデータを削除、\n" +
+              "またはプライベートブラウズで開き直してください。");
+        }
+      }).catch(function (err) {
+        say("ng", "❌ 開始できませんでした",
+            String(err && err.message ? err.message : err) + "\n\n" +
+            "https:// で開いているか確認してください。");
+      });
+    } else {
+      // Android Chrome など
+      window.addEventListener("deviceorientation", onEvent);
+      window.addEventListener("deviceorientationabsolute", onEvent);
+      check();
+    }
+  });
+})();
+</script>
+</body>
+</html>
