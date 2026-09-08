@@ -120,8 +120,29 @@
   //  センサー
   // ============================================================
 
-  var betaOffset = null;   // 開始時の姿勢を基準にする（水平に構え直さなくてよい）
-  var TILT_RANGE = 30;     // 何度傾けたら最大(1.0)にするか
+  // ------------------------------------------------------------
+  //  傾きの求め方
+  //
+  //  beta / gamma をそのまま使ってはいけない。
+  //  gamma は定義上 [-90, 90] に制限されており、端末が立ってくる
+  //  （beta が 90 に近づく）と Z-X'-Y'' 分解が縮退して、
+  //  わずかな傾きで gamma が -90 と 90 の間を飛ぶ。
+  //  ゲーム中は端末を見やすい角度（beta 40〜60°）で持つので、
+  //  この特異点のすぐ近くにいることになる。
+  //
+  //  そこで角度そのものではなく、
+  //  「重力を画面平面に投影したベクトル」を使う。
+  //  x 成分に cos(beta) が掛かるため、beta が 90 に近づくと
+  //  自動的に 0 へ潰れ、gamma の飛びが打ち消される。
+  //  しかも坂を転がる向きそのものなので、物理的にも正しい。
+  // ------------------------------------------------------------
+
+  var DEG  = Math.PI / 180;
+  var GAIN = 2.5;        // 約24°傾けると最大(1.0)になる
+  var SIGN_X = 1;        // 左右の向きが合わない端末では -1 にする
+  var SIGN_Y = 1;        // 前後の向きが合わない端末では -1 にする
+
+  var baseX = null, baseY = null;   // 開始時の姿勢を基準にする
 
   var sensorRequested = false;   // 開始ボタンが押されたか
   var gotSensorValue = false;    // 実際に値が1回でも届いたか
@@ -129,12 +150,21 @@
 
   function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
+  // 重力を画面平面に投影した成分（それぞれ -1 〜 1）
+  function gravityOnScreen(beta, gamma) {
+    var b = beta * DEG, g = gamma * DEG;
+    return { x: Math.cos(b) * Math.sin(g), y: Math.sin(b) };
+  }
+
   function onOrientation(e) {
     if (e.beta === null || e.gamma === null) { sawNullValue = true; return; }
     gotSensorValue = true;
-    if (betaOffset === null) betaOffset = e.beta;
-    tilt.x = clamp(e.gamma / TILT_RANGE, -1, 1);
-    tilt.y = clamp((e.beta - betaOffset) / TILT_RANGE, -1, 1);
+
+    var v = gravityOnScreen(e.beta, e.gamma);
+    if (baseX === null) { baseX = v.x; baseY = v.y; }
+
+    tilt.x = clamp(SIGN_X * (v.x - baseX) * GAIN, -1, 1);
+    tilt.y = clamp(SIGN_Y * (v.y - baseY) * GAIN, -1, 1);
   }
 
   function attachOrientation() {
@@ -208,7 +238,7 @@
     var kx = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
     var ky = (keys.ArrowDown ? 1 : 0) - (keys.ArrowUp ? 1 : 0);
     if (kx || ky) { tilt.x = kx; tilt.y = ky; }
-    else if (betaOffset === null) { tilt.x = 0; tilt.y = 0; }
+    else if (baseX === null) { tilt.x = 0; tilt.y = 0; }
   }
 
 
