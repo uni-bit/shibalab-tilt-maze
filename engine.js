@@ -351,8 +351,11 @@
 
   function drawWall(x, y, w, h) {
     if (wallPool.length <= wallUsed) {
+      // 高さは外周の縁（0.5）より低くしておく。
+      // 同じ高さだと、盤のふちまで伸ばした壁の上面と縁の上面が
+      // 同一平面になり、描画がちらつく（z-fighting）。
       var m = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 0.5, 1),
+        new THREE.BoxGeometry(1, 0.44, 1),
         new THREE.MeshStandardMaterial({ color: 0x5d3f26, roughness: 0.8 })
       );
       boardGroup.add(m);
@@ -361,7 +364,7 @@
     var mesh = wallPool[wallUsed++];
     mesh.visible = true;
     mesh.scale.set(Math.max(w * SCALE, 0.01), 1, Math.max(h * SCALE, 0.01));
-    mesh.position.set(wx(x + w / 2), 0.25 - BALL_R, wz(y + h / 2));
+    mesh.position.set(wx(x + w / 2), 0.22 - BALL_R, wz(y + h / 2));
   }
 
   function drawGoal(x, y, r) {
