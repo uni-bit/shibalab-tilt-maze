@@ -15,21 +15,28 @@ STEP 1 から 4 までは全員やる。5 は自由。
 
 ## STEP 1　壁を置く
 
-壁1本ぶんの情報を、玉と同じようにオブジェクトにまとめる。`update()` の外に書く。
+壁は何本も置くので、1本ずつ変数を作らずに**配列**にまとめる。`update()` の外に書く。
 
 ```js
-let wall1 = { x: 0,  y: 120, w: 210, h: 16 };
-let wall2 = { x: 90, y: 250, w: 210, h: 16 };
+let walls = [
+  { x: 0,  y: 120, w: 210, h: 16 },
+  { x: 90, y: 250, w: 210, h: 16 },
+];
 ```
 
-`x, y` は左上の角、`w, h` は幅と高さ。
+`x, y` は左上の角、`w, h` は幅と高さ。`[ ]` で囲んだものが配列で、`,` で区切って並べる。
 
-`update()` の中で描く。
+`update()` の中で、配列の全部を順に描く。**ここはコピーして貼ってよい。**
 
 ```js
-drawWall(wall1.x, wall1.y, wall1.w, wall1.h);
-drawWall(wall2.x, wall2.y, wall2.w, wall2.h);
+for (let i = 0; i < walls.length; i++) {
+  drawWall(walls[i].x, walls[i].y, walls[i].w, walls[i].h);
+}
 ```
+
+`walls.length` は入っている数。`i` を 0 から1ずつ増やしながら `walls[i]` で1本ずつ取り出している。
+
+壁を増やしたいときは**配列に1行足すだけ**でよく、この `for` は変えなくて済む。これが配列を使う理由。
 
 **確認**　盤に壁が2本現れる。玉はまだすり抜ける。
 
@@ -41,19 +48,18 @@ drawWall(wall2.x, wall2.y, wall2.w, wall2.h);
 
 ここが一番難しい。順を追って進める。
 
-### 2-1　当たっているかを調べる関数（写して動かす）
+### 2-1　当たっているかを調べる関数（コピペでよい）
 
-`update()` の外に書く。ここは読んで写すだけでよい。
+`update()` の外に書く。**ここは自分で考えなくてよい。コピーして貼る。**
 
 ```js
 function hitWall() {
-  if (ball.x > wall1.x && ball.x < wall1.x + wall1.w &&
-      ball.y > wall1.y && ball.y < wall1.y + wall1.h) {
-    return true;
-  }
-  if (ball.x > wall2.x && ball.x < wall2.x + wall2.w &&
-      ball.y > wall2.y && ball.y < wall2.y + wall2.h) {
-    return true;
+  for (let i = 0; i < walls.length; i++) {
+    let w = walls[i];
+    if (ball.x > w.x && ball.x < w.x + w.w &&
+        ball.y > w.y && ball.y < w.y + w.h) {
+      return true;
+    }
   }
   return false;
 }
@@ -180,24 +186,17 @@ STEP 3-3 と同じ書き方で要素を取得する。
 
 ### 壁の増やし方
 
-`wall3` を作り、描画と `hitWall()` の両方に足す。**2か所**必要。
+**`walls` の配列に1行足すだけ。** 描画も当たり判定も自動で効く。
 
 ```js
-let wall3 = { x: 40, y: 190, w: 16, h: 90 };
+let walls = [
+  { x: 0,  y: 120, w: 210, h: 16 },
+  { x: 90, y: 250, w: 210, h: 16 },
+  { x: 40, y: 190, w: 16,  h: 90 },   // ← 足した
+];
 ```
 
-```js
-drawWall(wall3.x, wall3.y, wall3.w, wall3.h);
-```
-
-```js
-if (ball.x > wall3.x && ball.x < wall3.x + wall3.w &&
-    ball.y > wall3.y && ball.y < wall3.y + wall3.h) {
-  return true;
-}
-```
-
-`w` より `h` を大きくすると縦向きの壁になる。
+`w` より `h` を大きくすると縦向きの壁になる。盤は横 300、縦 400。
 
 **少し考える**
 
@@ -209,9 +208,7 @@ if (ball.x > wall3.x && ball.x < wall3.x + wall3.w &&
 
 **挑戦**
 
-- **壁を配列にまとめる。** 壁を増やすたびに2か所コピーするのは面倒なので、
-  `let walls = [ {...}, {...} ]` にして `for` で回すと、足すのが1か所で済む。
-  配列とループを使う理由がこれ
+- ステージを2つ持ち、クリアしたら次に進む
 - 玉を2つにして、両方ゴールさせるとクリア
 - センサー値にローパスフィルタをかけて手ぶれを抑える
 - 効果音を鳴らす（`new Audio()`）
