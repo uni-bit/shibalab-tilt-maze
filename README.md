@@ -9,11 +9,70 @@ HTML / CSS / JavaScript / Git の基礎を扱う。
 
 ---
 
-## ▶ [セットアップ手順はこちら](docs/setup.md)
+## この講座だけの決めごと
 
-**教材のダウンロードから、VSCode で開き、GitHub で公開するまでの手順。**
-フォルダをどこに置くか、git でどこに移動するかまで、1ステップずつ書いてあります。
-初日はここから始めてください。
+GitHub アカウントの作り方、VSCode の使い方、git コマンドといった一般的な手順は
+講師が配る記事を見てください。ここには**この講座でしか出てこないこと**だけ書いてあります。
+
+### 1　教材のダウンロード
+
+<https://github.com/uni-bit/shibalab-tilt-maze/archive/refs/heads/main.zip>
+
+GitHub のアカウントが無くても落とせます（zip、約170KB）。
+
+### 2　置き場所は `C:\Users\<自分の名前>\shibalab\tilt-maze`
+
+**デスクトップに置かないでください。**
+OneDrive を使っていると、デスクトップの本当の場所が
+`C:\Users\<名前>\OneDrive\デスクトップ` にずれていることがあり、
+2日目に git がフォルダを見つけられなくなります。
+
+エクスプローラーのアドレス欄に `%USERPROFILE%` と入れると、置くべき場所が開きます。
+
+### 3　展開すると、フォルダが二重になります
+
+zip を右クリック → **すべて展開** → 展開先を `C:\Users\<自分の名前>\shibalab` と**手で入力**。
+そのあとフォルダ名を `tilt-maze` に変えてください。
+
+こうなっていれば正解です。
+
+```
+C:\Users\<自分の名前>\shibalab\tilt-maze\
+├── index.html      ← 自分で書く
+├── style.css       ← 自分で書く
+├── game.js         ← 自分で書く
+├── engine.js       ← 触らない
+├── three.min.js    ← 触らない
+├── sensor-check.html
+└── docs\session3.md
+```
+
+**`index.html` が `tilt-maze` の直下にあること。**
+中にまた `shibalab-tilt-maze-main` というフォルダがあったら、
+その中身を全部 1つ上へ移動してください。
+
+> zip を開いたまま中のファイルを編集しないこと。保存しても消えます。
+
+### 4　自分のリポジトリは「Use this template」で作る
+
+<https://github.com/uni-bit/shibalab-tilt-maze> → 緑の **Use this template**
+
+> このボタンは**ログインしていないと表示されません。**
+
+こうすると `engine.js` と `three.min.js` が最初から入った状態になるので、
+以降アップロードするのは**自分が編集したファイルだけ**で済みます。
+
+**Public のままにしてください。** Private だと公開できません。
+
+### 5　画面の確認にサーバーは要りません
+
+`index.html` を**ダブルクリック**するだけでブラウザに表示されます。
+編集して保存したら **F5**。変わらないときは **Ctrl + Shift + R**。
+
+Live Server などの拡張機能も、Python も入れなくて大丈夫です。
+
+> スマホで見るときだけは、GitHub Pages の公開 URL を使います。
+> センサーは `https://` でないと動かないので、`file://` では試せません。
 
 ---
 
