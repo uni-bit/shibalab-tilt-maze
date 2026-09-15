@@ -125,6 +125,10 @@ C:\Users\<自分の名前>\shibalab\
 
 1. <https://github.com/uni-bit/shibalab-tilt-maze> を開く
 2. 緑の **「Use this template」** → **「Create a new repository」**
+
+   > このボタンは**ログインしていないと表示されません。**
+   > 見つからない場合は、手順 5 でログインできているか確認してください。
+
 3. **Repository name** … `tilt-maze`（好きな名前でよい）
 4. **Public** のままにする（Private だと公開できません）
 5. **「Create repository」**
