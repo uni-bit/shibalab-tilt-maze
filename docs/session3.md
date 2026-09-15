@@ -15,28 +15,25 @@ STEP 1 から 4 までは全員やる。5 は自由。
 
 ## STEP 1　壁を置く
 
-壁は何本も置くので、1つずつ変数を作らずに配列にまとめる。
+壁1本ぶんの情報を、玉と同じようにオブジェクトにまとめる。`update()` の外に書く。
 
 ```js
-let walls = [
-  { x: 0,  y: 120, w: 210, h: 16 },
-  { x: 90, y: 250, w: 210, h: 16 },
-];
+let wall1 = { x: 0,  y: 120, w: 210, h: 16 };
+let wall2 = { x: 90, y: 250, w: 210, h: 16 };
 ```
 
-`update()` の中で、配列の全要素を順に描く。
+`x, y` は左上の角、`w, h` は幅と高さ。
+
+`update()` の中で描く。
 
 ```js
-for (let i = 0; i < walls.length; i++) {
-  drawWall(walls[i].x, walls[i].y, walls[i].w, walls[i].h);
-}
+drawWall(wall1.x, wall1.y, wall1.w, wall1.h);
+drawWall(wall2.x, wall2.y, wall2.w, wall2.h);
 ```
-
-`walls.length` は要素数。`i` を 0 から 1 ずつ増やしながら、`walls[i]` で各要素を取り出している。
-
-壁を増やしたいときは配列に `{ ... }` を足すだけでよく、`update()` 側は変えなくて済む。これが配列とループを使う理由。
 
 **確認**　盤に壁が2本現れる。玉はまだすり抜ける。
+
+数字を変えて、好きな位置・長さにしてみる。盤は横 300、縦 400。
 
 ---
 
@@ -44,18 +41,19 @@ for (let i = 0; i < walls.length; i++) {
 
 ここが一番難しい。順を追って進める。
 
-### 2-1　当たっているかを調べる関数
+### 2-1　当たっているかを調べる関数（写して動かす）
 
-`update()` の外に書く。
+`update()` の外に書く。ここは読んで写すだけでよい。
 
 ```js
 function hitWall() {
-  for (let i = 0; i < walls.length; i++) {
-    let w = walls[i];
-    if (ball.x > w.x && ball.x < w.x + w.w &&
-        ball.y > w.y && ball.y < w.y + w.h) {
-      return true;
-    }
+  if (ball.x > wall1.x && ball.x < wall1.x + wall1.w &&
+      ball.y > wall1.y && ball.y < wall1.y + wall1.h) {
+    return true;
+  }
+  if (ball.x > wall2.x && ball.x < wall2.x + wall2.w &&
+      ball.y > wall2.y && ball.y < wall2.y + wall2.h) {
+    return true;
   }
   return false;
 }
@@ -63,7 +61,8 @@ function hitWall() {
 
 玉の座標が、壁の左端と右端の間にあり、かつ上端と下端の間にもあるなら、その壁の中にいる。`&&` は「かつ」。
 
-1つでも当たっていれば `return true` で即座に抜ける。最後まで当たらなければ `false`。
+`return true` はその場で関数を抜けて「当たっている」と答える、という意味。
+どの壁にも当たらなければ最後の `return false` に届く。
 
 ### 2-2　めり込んだら戻す
 
@@ -174,10 +173,31 @@ STEP 3-3 と同じ書き方で要素を取得する。
 
 **手をつけやすい**
 
-- ステージを作り込む。壁を増やして迷路にする
+- 壁を増やして迷路にする（下記）
 - 色・タイトル・文字を変える
-- 感度、反発係数、摩擦を調整して手触りを詰める
+- 反発係数、摩擦、傾きの効きを調整して手触りを詰める
 - クリア時のメッセージを凝る
+
+### 壁の増やし方
+
+`wall3` を作り、描画と `hitWall()` の両方に足す。**2か所**必要。
+
+```js
+let wall3 = { x: 40, y: 190, w: 16, h: 90 };
+```
+
+```js
+drawWall(wall3.x, wall3.y, wall3.w, wall3.h);
+```
+
+```js
+if (ball.x > wall3.x && ball.x < wall3.x + wall3.w &&
+    ball.y > wall3.y && ball.y < wall3.y + wall3.h) {
+  return true;
+}
+```
+
+`w` より `h` を大きくすると縦向きの壁になる。
 
 **少し考える**
 
@@ -189,7 +209,9 @@ STEP 3-3 と同じ書き方で要素を取得する。
 
 **挑戦**
 
-- ステージを配列で複数持ち、クリアで次に進む
+- **壁を配列にまとめる。** 壁を増やすたびに2か所コピーするのは面倒なので、
+  `let walls = [ {...}, {...} ]` にして `for` で回すと、足すのが1か所で済む。
+  配列とループを使う理由がこれ
 - 玉を2つにして、両方ゴールさせるとクリア
 - センサー値にローパスフィルタをかけて手ぶれを抑える
 - 効果音を鳴らす（`new Audio()`）
