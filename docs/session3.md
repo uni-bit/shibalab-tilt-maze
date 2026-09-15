@@ -160,6 +160,10 @@ document.getElementById("message").textContent = "CLEAR";
 - `#timer` の `textContent` に入れる
 - クリア後は止める
 
+> **開始時刻を覚えておく変数は、`cleared` と同じように `update()` の外に書く。**
+> `update()` の中に書くと毎フレーム上書きされてしまい、
+> 経過時間がいつまでも `0.0` のままになります。
+
 小数第1位までにするには `toFixed(1)` を使う。
 
 ```js
